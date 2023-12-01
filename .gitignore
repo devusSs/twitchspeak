@@ -1,0 +1,8 @@
+.DS_STORE
+.logs_dev/
+.release/
+.testing/
+logs/
+*.json
+*.log
+*.env
