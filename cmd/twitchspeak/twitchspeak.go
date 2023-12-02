@@ -18,6 +18,7 @@ import (
 	"github.com/devusSs/twitchspeak/internal/database/psql"
 	"github.com/devusSs/twitchspeak/internal/database/redis"
 	"github.com/devusSs/twitchspeak/internal/server"
+	"github.com/devusSs/twitchspeak/internal/teamspeak"
 	"github.com/devusSs/twitchspeak/internal/updater"
 	"github.com/devusSs/twitchspeak/pkg/log"
 	"github.com/devusSs/twitchspeak/pkg/system"
@@ -126,6 +127,32 @@ func main() {
 		logger.Error("Error initializing twitch oauth: %v", err)
 		os.Exit(1)
 	}
+
+	b := teamspeak.NewBot(teamspeak.BotConfig{
+		Host:         cfg.TeamspeakHost,
+		Queryport:    cfg.TeamspeakQueryPort,
+		Port:         cfg.TeamspeakPort,
+		Username:     cfg.TeamspeakUser,
+		Password:     cfg.TeamspeakPassword,
+		Nickname:     cfg.TeamspeakNickname,
+		LoginBaseURL: fmt.Sprintf("%s/auth/twitch/login", cfg.BackendURL),
+		DB:           svc,
+		Console:      *consoleFlag,
+		Debug:        *debugFlag,
+	})
+
+	if err := b.EstablishConn(); err != nil {
+		logger.Error("Error establishing connection to TeamSpeak server: %v", err)
+		os.Exit(1)
+	}
+
+	if err := b.RegisterEvents(); err != nil {
+		logger.Error("Error registering events: %v", err)
+		os.Exit(1)
+	}
+
+	wg.Add(1)
+	go b.HandleEvents(ctx, wg)
 
 	s := server.NewServer(server.Config{
 		Port:        cfg.APIPort,
