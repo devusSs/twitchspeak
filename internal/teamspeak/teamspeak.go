@@ -108,12 +108,16 @@ func (b *Bot) HandleEvents(ctx context.Context, wg *sync.WaitGroup) {
 	for {
 		select {
 		case <-ctx.Done():
-			b.logger.Debug("context done, exiting event handler")
+			b.logger.Debug("Exiting event handler")
 			wg.Done()
 			return
 		// TODO: setup event handlers
 		case event := <-b.client.Notifications():
 			b.logger.Debug("Event: %v", event)
+
+			// Default commands:
+			// - !connect or login => connect twitch to ts identity or login if not logged in
+			// - !disconnect => disconnect twitch account from ts identity
 		}
 	}
 }

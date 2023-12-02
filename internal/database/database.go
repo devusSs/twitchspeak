@@ -14,8 +14,11 @@ type Service interface {
 
 	AddUser(user *User) (*User, error)
 	GetUserByTwitchID(twichID string) (*User, error)
+
+	// TODO: functions to integrate teamspeak details
 }
 
+// TODO: add more fields like the teamspeak details
 type User struct {
 	ID        uint      `gorm:"primarykey" json:"-"`
 	CreatedAt time.Time `                  json:"connected_since"`
