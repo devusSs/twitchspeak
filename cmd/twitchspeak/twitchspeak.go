@@ -6,8 +6,10 @@ import (
 	"os"
 	"os/signal"
 	"runtime"
+	"slices"
 	"sync"
 	"syscall"
+	"time"
 
 	flag "github.com/spf13/pflag"
 
@@ -18,6 +20,7 @@ import (
 	"github.com/devusSs/twitchspeak/internal/server"
 	"github.com/devusSs/twitchspeak/internal/updater"
 	"github.com/devusSs/twitchspeak/pkg/log"
+	"github.com/devusSs/twitchspeak/pkg/system"
 )
 
 func main() {
@@ -38,6 +41,11 @@ func main() {
 	if *versionFlag {
 		printVersion()
 		os.Exit(0)
+	}
+
+	if err := checkOSAndArch(); err != nil {
+		fmt.Println(err)
+		os.Exit(1)
 	}
 
 	wg := &sync.WaitGroup{}
@@ -215,4 +223,38 @@ func printVersion() {
 	fmt.Printf("Build Go version:\t%s\n", runtime.Version())
 	fmt.Printf("Build Go os:\t\t%s\n", runtime.GOOS)
 	fmt.Printf("Build Go arch:\t\t%s\n", runtime.GOARCH)
+}
+
+var (
+	supportedOS   = []string{"Linux", "Windows", "macOS"}
+	supportedArch = []string{"amd64", "x86_64", "arm64", "aarch64"}
+)
+
+func checkOSAndArch() error {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	osV, err := system.GetOS(ctx)
+	if err != nil {
+		return fmt.Errorf("error getting OS: %v", err)
+	}
+
+	archV, err := system.GetArch(ctx)
+	if err != nil {
+		return fmt.Errorf("error getting arch: %v", err)
+	}
+
+	if !slices.Contains(supportedOS, osV) {
+		return fmt.Errorf("unsupported OS: %s", osV)
+	}
+
+	if !slices.Contains(supportedArch, archV) {
+		return fmt.Errorf("unsupported arch: %s", archV)
+	}
+
+	if osV == "Windows" && archV != "amd64" && archV != "x86_64" {
+		return fmt.Errorf("unsupported arch for Windows: %s", archV)
+	}
+
+	return nil
 }
