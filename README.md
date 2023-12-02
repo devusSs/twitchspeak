@@ -20,6 +20,8 @@ This project is in no way affiliated to [Twitch](https://twitch.tv) or [TeamSpea
 
 The project is also a fun / side project for me so please expect bugs and potentially problems.
 
+The logo was generated using [logo.com](https://logo.com).
+
 ### LICENSE
 
 Licensed under [MIT License](./LICENSE)
