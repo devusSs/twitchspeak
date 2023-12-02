@@ -13,4 +13,4 @@ mkdir -p ./.testing
 cp ./.release/twitchspeak_"${BUILD_OS}"_"${BUILD_ARCH}"/twitchspeak ./.testing/twitchspeak
 
 # Run the application with specific parameters
-./.testing/twitchspeak -l .logs_dev -c .env --console --debug
+./.testing/twitchspeak -l .logs_dev -c .env --no-update --console --debug

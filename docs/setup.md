@@ -1,6 +1,9 @@
+### Setup and configuration
+
 Available flags:
 - `--help` to print help information and exit
 - `--version` to print version / build information and exit
+- `--no-update` to disable automatic update checks
 - `--console` to enable logging to console
 - `--debug` to add verbose logging and logging to console
 - `-l` or `--logs` to set the logs directory
