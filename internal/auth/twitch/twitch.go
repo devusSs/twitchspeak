@@ -104,14 +104,28 @@ func HandleLoginRoute(c *gin.Context) {
 		c.JSON(resp.Code, resp)
 		return
 	}
+
+	tsID := c.Query("ts_id")
+	if tsID == "" {
+		resp := responses.Error{
+			Code:         http.StatusBadRequest,
+			ErrorCode:    "invalid_ts_id",
+			ErrorMessage: "Teamspeak ID is empty",
+		}
+		c.JSON(resp.Code, resp)
+		return
+	}
+
 	requests.set(c.ClientIP(), request{
 		nonce: generateRandomString(nonceLength),
-		state: generateRandomString(stateLength),
+		state: generateRandomString(stateLength) + "&ts_id=" + tsID,
 	})
+
 	url := oauthConfig.AuthCodeURL(
 		requests.get(c.ClientIP()).state,
 		oauth2.SetAuthURLParam("nonce", requests.get(c.ClientIP()).nonce),
 	)
+
 	c.Redirect(http.StatusTemporaryRedirect, url)
 }
 
@@ -170,6 +184,8 @@ func HandleRedirectRoute(c *gin.Context) {
 		return
 	}
 
+	tsID := strings.Split(requests.get(c.ClientIP()).state, "&ts_id=")[1]
+
 	var claims claimsResponse
 	err = httplib.AuthorizedGet(
 		http.MethodGet,
@@ -186,8 +202,6 @@ func HandleRedirectRoute(c *gin.Context) {
 		c.JSON(resp.Code, resp)
 		return
 	}
-
-	twitchID := token.Extra("id_token")
 
 	u, err := url.Parse(c.Request.RequestURI)
 	if err != nil {
@@ -215,7 +229,7 @@ func HandleRedirectRoute(c *gin.Context) {
 		SameSite: http.SameSiteStrictMode,
 	})
 
-	session.Set("twitch_id", twitchID)
+	session.Set("twitch_id", claims.Sub)
 	if err := session.Save(); err != nil {
 		resp := responses.Error{
 			Code:         http.StatusInternalServerError,
@@ -226,13 +240,21 @@ func HandleRedirectRoute(c *gin.Context) {
 		return
 	}
 
-	// TODO: add stuff to database using svc
-	fmt.Println(claims)
-	fmt.Println(claims.Sub)
-
-	// TODO: remove this, just for linting purposes
-	if err := svc.TestConnection(); err != nil {
-		fmt.Println("RANDOM ERROR LELELELELELE")
+	_, err = svc.AddUser(&database.User{
+		TeamSpeakUID: tsID,
+		TwitchID:     claims.Sub,
+	})
+	if err != nil {
+		// Ignore duplicate key errors
+		if !strings.Contains(err.Error(), "duplicate key value violates unique constraint") {
+			resp := responses.Error{
+				Code:         http.StatusInternalServerError,
+				ErrorCode:    responses.CodeInternalError,
+				ErrorMessage: responses.MessageInternalError,
+			}
+			c.JSON(resp.Code, resp)
+			return
+		}
 	}
 
 	c.Redirect(http.StatusTemporaryRedirect, frontendURL)

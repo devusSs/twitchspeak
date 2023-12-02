@@ -110,10 +110,12 @@ func (s *Server) ApplyMiddlewares(svc database.Service, secretKey string) error 
 }
 
 // SetupRoutes sets up the routes for the gin engine
-func (s *Server) SetupRoutes(twitchRedirectURI string) error {
+func (s *Server) SetupRoutes(twitchRedirectURI string, svc database.Service) error {
 	if twitchRedirectURI == "" {
 		return fmt.Errorf("twitch redirect uri is empty")
 	}
+
+	routes.Svc = svc
 
 	u, err := url.Parse(twitchRedirectURI)
 	if err != nil {
@@ -139,6 +141,11 @@ func (s *Server) SetupRoutes(twitchRedirectURI string) error {
 			auth.GET("/twitch/login", twitch.HandleLoginRoute)
 			auth.GET(path, twitch.HandleRedirectRoute)
 			auth.GET("/logout", routes.LogoutRoute)
+		}
+
+		users := base.Group("/users")
+		{
+			users.GET("/me", routes.GetMeRoute)
 		}
 	}
 

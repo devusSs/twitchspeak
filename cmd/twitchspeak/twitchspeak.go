@@ -98,6 +98,11 @@ func main() {
 		os.Exit(1)
 	}
 
+	if err := svc.Migrate(); err != nil {
+		logger.Error("Error migrating database: %v", err)
+		os.Exit(1)
+	}
+
 	err = redis.Init(redis.Config{
 		Host:     cfg.RedisHost,
 		Port:     cfg.RedisPort,
@@ -135,7 +140,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err := s.SetupRoutes(cfg.TwitchRedirectURI); err != nil {
+	if err := s.SetupRoutes(cfg.TwitchRedirectURI, svc); err != nil {
 		logger.Error("Error setting up routes: %v", err)
 		os.Exit(1)
 	}

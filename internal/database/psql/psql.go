@@ -40,6 +40,27 @@ func (p *psql) GetDB() (*sql.DB, error) {
 	return db, nil
 }
 
+func (p *psql) Migrate() error {
+	return p.db.AutoMigrate(&database.User{})
+}
+
+func (p *psql) AddUser(user *database.User) (*database.User, error) {
+	err := p.db.Create(&user).Error
+	if err != nil {
+		return nil, err
+	}
+	return user, nil
+}
+
+func (p *psql) GetUserByTwitchID(twitchID string) (*database.User, error) {
+	var user database.User
+	err := p.db.Where("twitch_id = ?", twitchID).First(&user).Error
+	if err != nil {
+		return nil, err
+	}
+	return &user, nil
+}
+
 // Config for the database service
 type Config struct {
 	Host     string

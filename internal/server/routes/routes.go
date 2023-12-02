@@ -8,7 +8,13 @@ import (
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 
+	"github.com/devusSs/twitchspeak/internal/database"
 	"github.com/devusSs/twitchspeak/internal/server/responses"
+)
+
+// Needs to be initialized
+var (
+	Svc database.Service = nil
 )
 
 // NoRoute handles requests with invalid routes
@@ -46,17 +52,9 @@ func HomeRoute(c *gin.Context) {
 		return
 	}
 
-	session := sessions.Default(c)
-	id := session.Get("twitch_id")
-
-	data := struct {
-		LoggedIn bool   `json:"logged_in"`
-		Message  string `json:"message"`
-	}{id != nil, "Twitchspeak API"}
-
 	resp := responses.Success{
 		Code: http.StatusOK,
-		Data: data,
+		Data: "TwitchSpeak API",
 	}
 	c.JSON(resp.Code, resp)
 }
@@ -105,6 +103,39 @@ func LogoutRoute(c *gin.Context) {
 	resp := responses.Success{
 		Code: http.StatusOK,
 		Data: "Successfully logged out",
+	}
+	c.JSON(resp.Code, resp)
+}
+
+// GetMeRoute handles requests to the get me route
+func GetMeRoute(c *gin.Context) {
+	session := sessions.Default(c)
+	twitchID := session.Get("twitch_id")
+
+	if twitchID == nil {
+		resp := responses.Error{
+			Code:         http.StatusUnauthorized,
+			ErrorCode:    "unauthorized",
+			ErrorMessage: "You are not authorized to access this resource",
+		}
+		c.JSON(resp.Code, resp)
+		return
+	}
+
+	user, err := Svc.GetUserByTwitchID(twitchID.(string))
+	if err != nil {
+		resp := responses.Error{
+			Code:         http.StatusInternalServerError,
+			ErrorCode:    responses.CodeInternalError,
+			ErrorMessage: responses.MessageInternalError,
+		}
+		c.JSON(resp.Code, resp)
+		return
+	}
+
+	resp := responses.Success{
+		Code: http.StatusOK,
+		Data: user,
 	}
 	c.JSON(resp.Code, resp)
 }
