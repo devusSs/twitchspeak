@@ -16,12 +16,14 @@ import (
 	"github.com/devusSs/twitchspeak/internal/database/psql"
 	"github.com/devusSs/twitchspeak/internal/database/redis"
 	"github.com/devusSs/twitchspeak/internal/server"
+	"github.com/devusSs/twitchspeak/internal/updater"
 	"github.com/devusSs/twitchspeak/pkg/log"
 )
 
 func main() {
 	helpFlag := flag.Bool("help", false, "Prints help information and exits")
 	versionFlag := flag.Bool("version", false, "Prints version information and exits")
+	noUpdateFlag := flag.Bool("no-update", false, "Disables automatic update checks")
 	consoleFlag := flag.Bool("console", false, "Enables log output to console")
 	debugFlag := flag.Bool("debug", false, "Enables debug mode (verbose logging, also to console)")
 	logsDirFlag := flag.StringP("logs", "l", "logs", "Directory to store logs in")
@@ -36,6 +38,20 @@ func main() {
 	if *versionFlag {
 		printVersion()
 		os.Exit(0)
+	}
+
+	wg := &sync.WaitGroup{}
+	ctx, cancel := context.WithCancel(context.Background())
+
+	updateAvailable := make(chan bool, 1)
+
+	if !*noUpdateFlag {
+		if err := updater.CheckForUpdatesAndApply(buildVersion); err != nil {
+			fmt.Println("Error checking for updates:", err)
+			os.Exit(1)
+		}
+		wg.Add(1)
+		go updater.PeriodicUpdateCheck(ctx, buildVersion, updateAvailable, wg)
 	}
 
 	log.SetDefaultLogsDirectory(*logsDirFlag)
@@ -119,9 +135,7 @@ func main() {
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt, syscall.SIGINT)
 
-	ctx, cancel := context.WithCancel(context.Background())
 	errChan := make(chan error)
-	wg := &sync.WaitGroup{}
 
 	wg.Add(1)
 	go s.Start(ctx, errChan, wg)
@@ -155,6 +169,8 @@ func main() {
 				os.Exit(1)
 			}
 			logger.Error("Error: %v", err)
+		case <-updateAvailable:
+			logger.Info("New update available, please restart the app")
 		}
 	}
 }
@@ -162,11 +178,15 @@ func main() {
 const appMessage = `twitchspeak - Twitch integration for TeamSpeak 3`
 
 var (
+	buildVersion   string
 	buildDate      string
 	buildGitCommit string
 )
 
 func init() {
+	if buildVersion == "" {
+		buildVersion = "dev"
+	}
 	if buildDate == "" {
 		buildDate = "unknown"
 	}
@@ -188,6 +208,7 @@ func printHelp() {
 func printVersion() {
 	fmt.Println(appMessage)
 	fmt.Println()
+	fmt.Printf("Build version:\t\t%s\n", buildVersion)
 	fmt.Printf("Build date:\t\t%s\n", buildDate)
 	fmt.Printf("Build Git commit:\t%s\n", buildGitCommit)
 	fmt.Println()
