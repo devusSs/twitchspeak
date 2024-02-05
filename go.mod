@@ -14,7 +14,7 @@ require (
 	github.com/multiplay/go-ts3 v1.1.0
 	github.com/redis/go-redis/v9 v9.3.1
 	github.com/rhysd/go-github-selfupdate v1.2.3
-	github.com/rs/zerolog v1.31.0
+	github.com/rs/zerolog v1.32.0
 	github.com/spf13/pflag v1.0.5
 	golang.org/x/oauth2 v0.16.0
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
