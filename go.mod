@@ -19,7 +19,7 @@ require (
 	golang.org/x/oauth2 v0.16.0
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 	gorm.io/driver/postgres v1.5.4
-	gorm.io/gorm v1.25.6
+	gorm.io/gorm v1.25.7
 )
 
 require (
