@@ -11,7 +11,7 @@ require (
 	github.com/gin-contrib/sessions v0.0.5
 	github.com/gin-gonic/gin v1.9.1
 	github.com/joho/godotenv v1.5.1
-	github.com/multiplay/go-ts3 v1.1.0
+	github.com/multiplay/go-ts3 v1.2.0
 	github.com/redis/go-redis/v9 v9.5.1
 	github.com/rhysd/go-github-selfupdate v1.2.3
 	github.com/rs/zerolog v1.32.0
