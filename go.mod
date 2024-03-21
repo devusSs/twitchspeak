@@ -18,7 +18,7 @@ require (
 	github.com/spf13/pflag v1.0.5
 	golang.org/x/oauth2 v0.17.0
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
-	gorm.io/driver/postgres v1.5.4
+	gorm.io/driver/postgres v1.5.7
 	gorm.io/gorm v1.25.7
 )
 
